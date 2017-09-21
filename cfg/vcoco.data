@@ -1,0 +1,7 @@
+classes= 8
+train  = /home/mengyong/Downloads/coco/filelist/train2014.txt
+valid  = /home/mengyong/Downloads/coco/filelist/test.txt
+names = data/vcoco.names
+backup = backup
+eval = 
+
