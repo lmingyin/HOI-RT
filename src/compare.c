@@ -1,7 +1,7 @@
 #include <stdio.h>
 
 #include "network.h"
-#include "detection_layer.h"
+//#include "detection_layer.h"
 #include "cost_layer.h"
 #include "utils.h"
 #include "parser.h"

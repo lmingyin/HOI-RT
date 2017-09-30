@@ -17,7 +17,6 @@ extern "C" {
 #include "rnn_layer.h"
 #include "gru_layer.h"
 #include "crnn_layer.h"
-#include "detection_layer.h"
 #include "region_layer.h"
 #include "convolutional_layer.h"
 #include "activation_layer.h"

@@ -246,7 +246,7 @@ int nms_comparator(const void *pa, const void *pb)
     return 0;
 }
 
-void do_nms_obj(box *boxes, float **probs, int total, int classes, float thresh)
+void do_nms_act(box *boxes, float **probs, int total, int classes, float thresh)
 {
     int i, j, k;
     sortable_bbox *s = calloc(total, sizeof(sortable_bbox));
@@ -262,14 +262,42 @@ void do_nms_obj(box *boxes, float **probs, int total, int classes, float thresh)
 	qsort(s, total, sizeof(sortable_bbox), nms_comparator);
     for(i = 0; i < total; ++i){
         if(probs[s[i].index][classes] == 0) continue;
-        box a1 = boxes[s[i].index * 2 ];
+        box a1 = boxes[s[i].index *2];
 		box a2 = boxes[s[i].index *2 + 1];
         for(j = i+1; j < total; ++j){
             box b1 = boxes[s[j].index * 2];
 			box b2 = boxes[s[j].index * 2 + 1];
 			float iou1 = box_iou(a1, b1);
 			float iou2 = box_iou(a2, b2);
-			float iou = iou1;
+			float iou = (iou1 + iou2) / 2;
+            if (iou1 > thresh){
+                for(k = 0; k < classes+1; ++k){
+                    probs[s[j].index][k] = 0;
+                }
+            }
+        }
+    }
+    free(s);
+}
+
+
+void do_nms_obj(box *boxes, float **probs, int total, int classes, float thresh)
+{
+    int i, j, k;
+    sortable_bbox *s = calloc(total, sizeof(sortable_bbox));
+
+    for(i = 0; i < total; ++i){
+        s[i].index = i;       
+        s[i].class = classes;
+        s[i].probs = probs;
+    }
+    qsort(s, total, sizeof(sortable_bbox), nms_comparator);
+    for(i = 0; i < total; ++i){
+        if(probs[s[i].index][classes] == 0) continue;
+        box a = boxes[s[i].index];
+        for(j = i+1; j < total; ++j){
+            box b = boxes[s[j].index];
+            float iou = box_iou(a, b);
             if (iou > thresh){
                 for(k = 0; k < classes+1; ++k){
                     probs[s[j].index][k] = 0;
@@ -302,6 +330,36 @@ void do_nms_sort(box *boxes, float **probs, int total, int classes, float thresh
             box a = boxes[s[i].index];
             for(j = i+1; j < total; ++j){
                 box b = boxes[s[j].index];
+                if (box_iou(a, b) > thresh){
+                    probs[s[j].index][k] = 0;
+                }
+            }
+        }
+    }
+    free(s);
+}
+
+void do_nms_sort_act_valid(box *boxes, float **probs, int total, int classes, float thresh)
+{
+    int i, j, k;
+    sortable_bbox *s = calloc(total, sizeof(sortable_bbox));
+
+    for(i = 0; i < total; ++i){
+        s[i].index = i;       
+        s[i].class = 0;
+        s[i].probs = probs;
+    }
+
+    for(k = 0; k < classes; ++k){
+        for(i = 0; i < total; ++i){
+            s[i].class = k;
+        }
+        qsort(s, total, sizeof(sortable_bbox), nms_comparator);
+        for(i = 0; i < total; ++i){
+            if(probs[s[i].index][k] == 0) continue;
+            box a = boxes[s[i].index * 2];
+            for(j = i+1; j < total; ++j){
+                box b = boxes[s[j].index * 2];
                 if (box_iou(a, b) > thresh){
                     probs[s[j].index][k] = 0;
                 }

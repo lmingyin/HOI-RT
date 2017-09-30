@@ -14,7 +14,6 @@
 #include "cost_layer.h"
 #include "crnn_layer.h"
 #include "crop_layer.h"
-#include "detection_layer.h"
 #include "dropout_layer.h"
 #include "gru_layer.h"
 #include "list.h"
@@ -267,11 +266,14 @@ softmax_layer parse_softmax(list *options, size_params params)
 
 layer parse_region(list *options, size_params params)
 {
-    int coords = option_find_int(options, "coords", 4);
-    int classes = option_find_int(options, "classes", 20);
+    int coords_act = option_find_int(options, "coords_act", 8);
+    int coords_obj = option_find_int(options, "coords_obj", 4);
+    int classes_act = option_find_int(options, "classes_act", 20);
+    int classes_obj = option_find_int(options, "classes_obj", 20);    
     int num = option_find_int(options, "num", 1);
+    int boundary = option_find_int_quiet(options, "boundary", 5);
 
-    layer l = make_region_layer(params.batch, params.w, params.h, num, classes, coords);
+    layer l = make_region_layer(params.batch, params.w, params.h, num, boundary, classes_act, classes_obj, coords_act, coords_obj); 
     assert(l.outputs == params.inputs);
 
     l.log = option_find_int_quiet(options, "log", 0);
@@ -294,6 +296,8 @@ layer parse_region(list *options, size_params params)
     l.class_scale = option_find_float(options, "class_scale", 1);
     l.bias_match = option_find_int_quiet(options, "bias_match",0);
 
+
+
     char *tree_file = option_find_str(options, "tree", 0);
     if (tree_file) l.softmax_tree = read_tree(tree_file);
     char *map_file = option_find_str(options, "map", 0);
@@ -314,29 +318,6 @@ layer parse_region(list *options, size_params params)
         }
     }
     return l;
-}
-detection_layer parse_detection(list *options, size_params params)
-{
-    int coords = option_find_int(options, "coords", 1);
-    int classes = option_find_int(options, "classes", 1);
-    int rescore = option_find_int(options, "rescore", 0);
-    int num = option_find_int(options, "num", 1);
-    int side = option_find_int(options, "side", 7);
-    detection_layer layer = make_detection_layer(params.batch, params.inputs, num, side, classes, coords, rescore);
-
-    layer.softmax = option_find_int(options, "softmax", 0);
-    layer.sqrt = option_find_int(options, "sqrt", 0);
-
-    layer.max_boxes = option_find_int_quiet(options, "max",30);
-    layer.coord_scale = option_find_float(options, "coord_scale", 1);
-    layer.forced = option_find_int(options, "forced", 0);
-    layer.object_scale = option_find_float(options, "object_scale", 1);
-    layer.noobject_scale = option_find_float(options, "noobject_scale", 1);
-    layer.class_scale = option_find_float(options, "class_scale", 1);
-    layer.jitter = option_find_float(options, "jitter", .2);
-    layer.random = option_find_int_quiet(options, "random", 0);
-    layer.reorg = option_find_int_quiet(options, "reorg", 0);
-    return layer;
 }
 
 cost_layer parse_cost(list *options, size_params params)
@@ -676,8 +657,6 @@ network parse_network_cfg(char *filename)
             l = parse_cost(options, params);
         }else if(lt == REGION){
             l = parse_region(options, params);
-        }else if(lt == DETECTION){
-            l = parse_detection(options, params);
         }else if(lt == SOFTMAX){
             l = parse_softmax(options, params);
             net.hierarchy = l.softmax_tree;

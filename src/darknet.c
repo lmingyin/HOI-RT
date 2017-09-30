@@ -7,9 +7,7 @@
 extern void predict_classifier(char *datacfg, char *cfgfile, char *weightfile, char *filename, int top);
 extern void test_detector(char *datacfg, char *cfgfile, char *weightfile, char *filename, float thresh, float hier_thresh, char *outfile, int fullscreen);
 extern void run_voxel(int argc, char **argv);
-extern void run_yolo(int argc, char **argv);
 extern void run_detector(int argc, char **argv);
-extern void run_coco(int argc, char **argv);
 extern void run_writing(int argc, char **argv);
 extern void run_captcha(int argc, char **argv);
 extern void run_nightmare(int argc, char **argv);
@@ -406,14 +404,6 @@ int main(int argc, char **argv)
 
     if (0 == strcmp(argv[1], "average")){
         average(argc, argv);
-    } else if (0 == strcmp(argv[1], "yolo")){
-        run_yolo(argc, argv);
-    } else if (0 == strcmp(argv[1], "voxel")){
-        run_voxel(argc, argv);
-    } else if (0 == strcmp(argv[1], "super")){
-        run_super(argc, argv);
-    } else if (0 == strcmp(argv[1], "lsd")){
-        run_lsd(argc, argv);
     } else if (0 == strcmp(argv[1], "detector")){
         run_detector(argc, argv);
     } else if (0 == strcmp(argv[1], "detect")){
@@ -422,43 +412,7 @@ int main(int argc, char **argv)
         char *outfile = find_char_arg(argc, argv, "-out", 0);
         int fullscreen = find_arg(argc, argv, "-fullscreen");
         test_detector("cfg/coco.data", argv[2], argv[3], filename, thresh, .5, outfile, fullscreen);
-    } else if (0 == strcmp(argv[1], "cifar")){
-        run_cifar(argc, argv);
-    } else if (0 == strcmp(argv[1], "go")){
-        run_go(argc, argv);
-    } else if (0 == strcmp(argv[1], "rnn")){
-        run_char_rnn(argc, argv);
-    } else if (0 == strcmp(argv[1], "vid")){
-        run_vid_rnn(argc, argv);
-    } else if (0 == strcmp(argv[1], "coco")){
-        run_coco(argc, argv);
-    } else if (0 == strcmp(argv[1], "classify")){
-        predict_classifier("cfg/imagenet1k.data", argv[2], argv[3], argv[4], 5);
-    } else if (0 == strcmp(argv[1], "classifier")){
-        run_classifier(argc, argv);
-    } else if (0 == strcmp(argv[1], "regressor")){
-        run_regressor(argc, argv);
-    } else if (0 == strcmp(argv[1], "segmenter")){
-        run_segmenter(argc, argv);
-    } else if (0 == strcmp(argv[1], "art")){
-        run_art(argc, argv);
-    } else if (0 == strcmp(argv[1], "tag")){
-        run_tag(argc, argv);
-    } else if (0 == strcmp(argv[1], "compare")){
-        run_compare(argc, argv);
-    } else if (0 == strcmp(argv[1], "dice")){
-        run_dice(argc, argv);
-    } else if (0 == strcmp(argv[1], "writing")){
-        run_writing(argc, argv);
-    } else if (0 == strcmp(argv[1], "3d")){
-        composite_3d(argv[2], argv[3], argv[4], (argc > 5) ? atof(argv[5]) : 0);
-    } else if (0 == strcmp(argv[1], "test")){
-        test_resize(argv[2]);
-    } else if (0 == strcmp(argv[1], "captcha")){
-        run_captcha(argc, argv);
-    } else if (0 == strcmp(argv[1], "nightmare")){
-        run_nightmare(argc, argv);
-    } else if (0 == strcmp(argv[1], "rgbgr")){
+    }else if (0 == strcmp(argv[1], "rgbgr")){
         rgbgr_net(argv[2], argv[3], argv[4]);
     } else if (0 == strcmp(argv[1], "reset")){
         reset_normalize_net(argv[2], argv[3], argv[4]);

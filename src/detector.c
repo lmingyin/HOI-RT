@@ -38,7 +38,7 @@ void train_detector(char *datacfg, char *cfgfile, char *weightfile, int *gpus, i
 
     layer l = net.layers[net.n - 1];
 
-    int classes = l.classes;
+    int classes = l.classes_act;
     float jitter = l.jitter;
 
     list *plist = get_paths(train_images);
@@ -213,7 +213,7 @@ static void print_cocos(FILE *fp, char *image_path, box *boxes, float **probs, i
 void print_detector_detections(FILE **fps, char *id, box *boxes, float **probs, int total, int classes, int w, int h)
 {
     int i, j, k;
-    int stride = 1;
+    int stride = 2;
     for(i = 0; i < total; ++i){
     	k = i * stride;
         float xmin = boxes[k].x - boxes[k].w/2. + 1;
@@ -310,7 +310,7 @@ void validate_detector_flip(char *datacfg, char *cfgfile, char *weightfile, char
     char **paths = (char **)list_to_array(plist);
 
     layer l = net.layers[net.n-1];
-    int classes = l.classes;
+    int classes = l.classes_act;
 
     char buff[1024];
     char *type = option_find_str(options, "eval", "voc");
@@ -396,7 +396,7 @@ void validate_detector_flip(char *datacfg, char *cfgfile, char *weightfile, char
             network_predict(net, input.data);
             int w = val[t].w;
             int h = val[t].h;
-            get_region_boxes(l, w, h, net.w, net.h, thresh, probs, boxes, 0, map, .5, 0);
+            get_region_boxes_obj(l, w, h, net.w, net.h, thresh, probs, boxes, 0, map, .5, 0);
             if (nms) do_nms_sort(boxes, probs, l.w*l.h*l.n, classes, nms);
             if (coco){
                 print_cocos(fp, path, boxes, probs, l.w*l.h*l.n, classes, w, h);
@@ -427,9 +427,11 @@ void validate_detector(char *datacfg, char *cfgfile, char *weightfile, char *out
     int j;
     list *options = read_data_cfg(datacfg);
     char *valid_images = option_find_str(options, "valid", "data/train.list");
-    char *name_list = option_find_str(options, "names", "data/names.list");
+    char *name_list_act = option_find_str(options, "names_act", "data/names.list");
+    char *name_list_obj = option_find_str(options, "names_obj", "data/names.list");
     char *prefix = option_find_str(options, "results", "results");
-    char **names = get_labels(name_list);
+    char **names_act = get_labels(name_list_act);
+    char **names_obj = get_labels(name_list_obj);
     char *mapf = option_find_str(options, "map", 0);
     int *map = 0;
     if (mapf) map = read_map(mapf);
@@ -446,7 +448,8 @@ void validate_detector(char *datacfg, char *cfgfile, char *weightfile, char *out
     char **paths = (char **)list_to_array(plist);
 
     layer l = net.layers[net.n-1];
-    int classes = l.classes;
+    int classes_act = l.classes_act;
+    int classes_obj = l.classes_obj;
 
     char buff[1024];
     char *type = option_find_str(options, "eval", "voc");
@@ -461,40 +464,36 @@ void validate_detector(char *datacfg, char *cfgfile, char *weightfile, char *out
         fp = fopen(buff, "w");
         fprintf(fp, "[\n");
         coco = 1;
-    } else if(0==strcmp(type, "imagenet")){
-        if(!outfile) outfile = "imagenet-detection";
-        snprintf(buff, 1024, "%s/%s.txt", prefix, outfile);
-        fp = fopen(buff, "w");
-        imagenet = 1;
-        classes = 200;
     } else if(0==strcmp(type, "relation")){
-        if(!outfile) outfile = "comp4_det_test_";
-        fps = calloc(classes, sizeof(FILE *));
-        for(j = 0; j < classes; ++j){
-            snprintf(buff, 1024, "%s/%s%s.txt", prefix, outfile, names[j]);
+        //if(!outfile) outfile = "comp4_det_test_";
+        fps = calloc(classes_act, sizeof(FILE *));
+        for(j = 0; j < classes_act; ++j){
+            snprintf(buff, 1024, "%s/%s.txt", prefix, names_act[j]);
             fps[j] = fopen(buff, "w");
         }
         relation = 1;
     } else {
         //if(!outfile) outfile = "comp4_det_test_";
-        fps = calloc(classes, sizeof(FILE *));
-        for(j = 0; j < classes; ++j){
+        fps = calloc(classes_act, sizeof(FILE *));
+        for(j = 0; j < classes_act; ++j){
             //snprintf(buff, 1024, "%s/%s%s.txt", prefix, outfile, names[j]);
-            snprintf(buff, 1024, "%s/%s.txt", prefix, names[j]);
+            snprintf(buff, 1024, "%s/%s.txt", prefix, names_act[j]);
             fps[j] = fopen(buff, "w");
         }
     }
 
 
-    box *boxes = calloc(l.w*l.h*l.n, sizeof(box));
-    float **probs = calloc(l.w*l.h*l.n, sizeof(float *));
-    for(j = 0; j < l.w*l.h*l.n; ++j) probs[j] = calloc(classes+1, sizeof(float *));
-
+    box *boxes_act = calloc(l.w*l.h*l.boundary*2, sizeof(box));
+    box *boxes_obj = calloc(l.w*l.h*(l.n - l.boundary), sizeof(box));
+    float **probs_act = calloc(l.w*l.h*l.boundary, sizeof(float *));
+    float **probs_obj = calloc(l.w*l.h*(l.n - l.boundary), sizeof(float *));
+    for(j = 0; j < l.w*l.h*l.boundary; ++j) probs_act[j] = calloc(classes_act+1, sizeof(float *));
+    for(j = 0; j < l.w*l.h*(l.n - l.boundary); ++j) probs_obj[j] = calloc(classes_obj+1, sizeof(float *));
     int m = plist->size;
     int i=0;
     int t;
 
-    float thresh = .00001;
+    float thresh = .0001;
     //float thresh = .01;
     float nms = .45;
 
@@ -538,24 +537,26 @@ void validate_detector(char *datacfg, char *cfgfile, char *weightfile, char *out
             network_predict(net, X);
             int w = val[t].w;
             int h = val[t].h;
-            get_region_boxes(l, w, h, net.w, net.h, thresh, probs, boxes, 0, map, .5, 0);
-            if (nms) do_nms_sort(boxes, probs, l.w*l.h*l.n, classes, nms);
+            get_region_boxes_act(l, w, h, net.w, net.h, thresh, probs_act, boxes_act, 0, map, .5, 0);
+            if (nms){
+                if (relation)
+                    do_nms_act(boxes_act, probs_act, l.w*l.h*l.boundary, classes_act, nms);
+                else
+                    do_nms_sort_act_valid(boxes_act, probs_act, l.w*l.h*l.boundary, classes_act, nms);                    
+            } 
             if (coco){
-                print_cocos(fp, path, boxes, probs, l.w*l.h*l.n, classes, w, h);
-            } else if (imagenet){
-                print_imagenet_detections(fp, i+t-nthreads+1, boxes, probs, l.w*l.h*l.n, classes, w, h);
+                print_cocos(fp, path, boxes_act, probs_act, l.w*l.h*l.n, classes_act, w, h);
             } else if (relation){
-            	//printf("Hello World~~~\n");
-                print_relation_detections(fps, id, boxes, probs, l.w*l.h*l.n, classes, w, h);
+                print_relation_detections(fps, id, boxes_act, probs_act, l.w*l.h*l.boundary, classes_act, w, h);
             } else {
-                print_detector_detections(fps, id, boxes, probs, l.w*l.h*l.n, classes, w, h);
+                print_detector_detections(fps, id, boxes_act, probs_act, l.w*l.h*l.boundary, classes_act, w, h);
             }
             free(id);
             free_image(val[t]);
             free_image(val_resized[t]);
         }
     }
-    for(j = 0; j < classes; ++j){
+    for(j = 0; j < classes_act; ++j){
         if(fps) fclose(fps[j]);
     }
     if(coco){
@@ -580,7 +581,7 @@ void validate_detector_recall(char *cfgfile, char *weightfile)
     char **paths = (char **)list_to_array(plist);
 
     layer l = net.layers[net.n-1];
-    int classes = l.classes;
+    int classes = l.classes_act;
 
     int j, k;
     box *boxes = calloc(l.w*l.h*l.n, sizeof(box));
@@ -605,7 +606,7 @@ void validate_detector_recall(char *cfgfile, char *weightfile)
         image sized = resize_image(orig, net.w, net.h);
         char *id = basecfg(path);
         network_predict(net, sized.data);
-        get_region_boxes(l, sized.w, sized.h, net.w, net.h, thresh, probs, boxes, 1, 0, .5, 1);
+        get_region_boxes_obj(l, sized.w, sized.h, net.w, net.h, thresh, probs, boxes, 1, 0, .5, 1);
         if (nms) do_nms(boxes, probs, l.w*l.h*l.n, 1, nms);
 
         char labelpath[4096];
@@ -646,9 +647,10 @@ void validate_detector_recall(char *cfgfile, char *weightfile)
 
 void test_detector(char *datacfg, char *cfgfile, char *weightfile, char *filename, float thresh, float hier_thresh, char *outfile, int fullscreen)
 {
+#if 0
     list *options = read_data_cfg(datacfg);
-    char *name_list = option_find_str(options, "names", "data/names.list");
-    char **names = get_labels(name_list);
+    char *name_list = option_find_str(options, "names_obj", "data/names.list");
+    char **names_obj = get_labels(name_list);
 
     image **alphabet = load_alphabet();
     network net = parse_network_cfg(cfgfile);
@@ -674,25 +676,20 @@ void test_detector(char *datacfg, char *cfgfile, char *weightfile, char *filenam
         }
         image im = load_image_color(input,0,0);
         image sized = letterbox_image(im, net.w, net.h);
-        //image sized = resize_image(im, net.w, net.h);
-        //image sized2 = resize_max(im, net.w);
-        //image sized = crop_image(sized2, -((net.w - sized2.w)/2), -((net.h - sized2.h)/2), net.w, net.h);
-        //resize_network(&net, sized.w, sized.h);
         layer l = net.layers[net.n-1];
-
-        box *boxes = calloc(l.w*l.h*l.n, sizeof(box));
-        float **probs = calloc(l.w*l.h*l.n, sizeof(float *));
-        for(j = 0; j < l.w*l.h*l.n; ++j) probs[j] = calloc(l.classes + 1, sizeof(float *));
+        box *boxes = calloc(l.w*l.h*(l.n-l.boundary), sizeof(box));
+        float **probs = calloc(l.w*l.h*(l.n-l.boundary), sizeof(float *));
+        for(j = 0; j < l.w*l.h*(l.n-l.boundary); ++j) probs[j] = calloc(l.classes_obj + 1, sizeof(float *));
 
         float *X = sized.data;
         time=clock();
         network_predict(net, X);
         printf("%s: Predicted in %f seconds.\n", input, sec(clock()-time));
-        get_region_boxes(l, im.w, im.h, net.w, net.h, thresh, probs, boxes, 0, 0, hier_thresh, 1);
+        get_region_boxes_obj(l, im.w, im.h, net.w, net.h, thresh, probs, boxes, 0, 0, hier_thresh, 1);
         printf("here .......\n");
-        if (nms) do_nms_obj(boxes, probs, l.w*l.h*l.n, l.classes, nms);
+        if (nms) do_nms_obj(boxes, probs, l.w*l.h*(l.n-l.boundary), l.classes_obj, nms);
         //else if (nms) do_nms_sort(boxes, probs, l.w*l.h*l.n, l.classes, nms);
-        draw_detections(im, l.w*l.h*l.n, thresh, boxes, probs, names, alphabet, l.classes);
+        draw_detections(im, l.w*l.h*(l.n-l.boundary), thresh, boxes, probs, names_obj, alphabet, l.classes_obj);
         if(outfile){
             save_image(im, outfile);
         }
@@ -715,12 +712,89 @@ void test_detector(char *datacfg, char *cfgfile, char *weightfile, char *filenam
         free_ptrs((void **)probs, l.w*l.h*l.n);
         if (filename) break;
     }
+#else
+    list *options = read_data_cfg(datacfg);
+    char *name_list_act = option_find_str(options, "names_act", "data/names.list");
+    char *name_list_obj = option_find_str(options, "names_obj", "data/names.list");
+    char **names_obj = get_labels(name_list_obj);
+    char **names_act = get_labels(name_list_act);
+
+    image **alphabet = load_alphabet();
+    network net = parse_network_cfg(cfgfile);
+    if(weightfile){
+        load_weights(&net, weightfile);
+    }
+    set_batch_network(&net, 1);
+    srand(2222222);
+    clock_t time;
+    char buff[256];
+    char *input = buff;
+    int j;
+    float nms=.4;
+    while(1){
+        if(filename){
+            strncpy(input, filename, 256);
+        } else {
+            printf("Enter Image Path: ");
+            fflush(stdout);
+            input = fgets(input, 256, stdin);
+            if(!input) return;
+            strtok(input, "\n");
+        }
+        image im = load_image_color(input,0,0);
+        image sized = letterbox_image(im, net.w, net.h);
+        layer l = net.layers[net.n-1];
+        box *boxes_act = calloc(l.w*l.h*l.boundary*2, sizeof(box));
+        box *boxes_obj = calloc(l.w*l.h*(l.n - l.boundary)*2, sizeof(box));
+        float **probs_act = calloc(l.w*l.h*l.boundary, sizeof(float *));
+        float **probs_obj = calloc(l.w*l.h*(l.n - l.boundary), sizeof(float *));
+        for(j = 0; j < l.w*l.h*l.boundary; ++j) probs_act[j] = calloc(l.classes_act + 1, sizeof(float *));
+        for(j = 0; j < l.w*l.h*(l.n - l.boundary); ++j) probs_obj[j] = calloc(l.classes_obj + 1, sizeof(float *));
+
+        float *X = sized.data;
+        time=clock();
+        network_predict(net, X);
+        printf("%s: Predicted in %f seconds.\n", input, sec(clock()-time));
+        get_region_boxes_act(l, im.w, im.h, net.w, net.h, thresh, probs_act, boxes_act, 0, 0, hier_thresh, 1);
+        get_region_boxes_obj(l, im.w, im.h, net.w, net.h, thresh, probs_obj, boxes_obj, 0, 0, hier_thresh, 1);
+        printf("get_region_boxes_act .......\n");
+        if (nms) do_nms_act(boxes_act, probs_act, l.w*l.h*l.boundary, l.classes_act, nms);
+        if (nms) do_nms_obj(boxes_obj, probs_obj, l.w*l.h*(l.n - l.boundary), l.classes_obj, nms);
+        //else if (nms) do_nms_sort(boxes, probs, l.w*l.h*l.n, l.classes, nms);
+        draw_detections_act(im, l.w*l.h*l.boundary, thresh, boxes_act, probs_act, names_act, alphabet, l.classes_act);
+        draw_detections_obj(im, l.w*l.h*(l.n - l.boundary), thresh, boxes_obj, probs_obj, names_obj, alphabet, l.classes_obj);
+        if(outfile){
+            save_image(im, outfile);
+        }
+        else{
+            save_image(im, "predictions");
+#ifdef OPENCV
+            cvNamedWindow("predictions", CV_WINDOW_NORMAL); 
+            if(fullscreen){
+                cvSetWindowProperty("predictions", CV_WND_PROP_FULLSCREEN, CV_WINDOW_FULLSCREEN);
+            }
+            show_image(im, "predictions");
+            cvWaitKey(0);
+            cvDestroyAllWindows();
+#endif
+        }
+
+        free_image(im);
+        free_image(sized);
+        free(boxes_act);
+        free(boxes_obj);
+        free_ptrs((void **)probs_act, l.w*l.h*l.n);
+        free_ptrs((void **)probs_obj, l.w*l.h*l.n);
+        if (filename) break;
+    }
+#endif
 }
 
 void run_detector(int argc, char **argv)
 {
     char *prefix = find_char_arg(argc, argv, "-prefix", 0);
     float thresh = find_float_arg(argc, argv, "-thresh", .24);
+    //float thresh = find_float_arg(argc, argv, "-thresh", .80);
     float hier_thresh = find_float_arg(argc, argv, "-hier", .5);
     int cam_index = find_int_arg(argc, argv, "-c", 0);
     int frame_skip = find_int_arg(argc, argv, "-s", 0);

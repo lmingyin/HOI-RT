@@ -133,8 +133,10 @@ struct layer{
     float ratio;
     float learning_rate_scale;
     int softmax;
-    int classes;
-    int coords;
+    int classes_act;
+    int classes_obj;
+    int coords_act;
+    int coords_obj;
     int background;
     int rescore;
     int objectness;
@@ -143,6 +145,7 @@ struct layer{
     int noadjust;
     int reorg;
     int log;
+    int boundary;
 
     int adam;
     float B1;
@@ -511,7 +514,6 @@ list *read_cfg(char *filename);
 #include "data.h"
 #include "deconvolutional_layer.h"
 #include "demo.h"
-#include "detection_layer.h"
 #include "dropout_layer.h"
 #include "gemm.h"
 #include "gru_layer.h"

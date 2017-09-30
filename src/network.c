@@ -15,7 +15,7 @@
 #include "local_layer.h"
 #include "convolutional_layer.h"
 #include "activation_layer.h"
-#include "detection_layer.h"
+//#include "detection_layer.h"
 #include "region_layer.h"
 #include "normalization_layer.h"
 #include "batchnorm_layer.h"
@@ -135,8 +135,6 @@ char *get_layer_string(LAYER_TYPE a)
             return "avgpool";
         case SOFTMAX:
             return "softmax";
-        case DETECTION:
-            return "detection";
         case REGION:
             return "region";
         case DROPOUT:
@@ -367,19 +365,6 @@ int resize_network(network *net, int w, int h)
 #endif
     //fprintf(stderr, " Done!\n");
     return 0;
-}
-
-detection_layer get_network_detection_layer(network net)
-{
-    int i;
-    for(i = 0; i < net.n; ++i){
-        if(net.layers[i].type == DETECTION){
-            return net.layers[i];
-        }
-    }
-    fprintf(stderr, "Detection layer not found!!\n");
-    detection_layer l = {0};
-    return l;
 }
 
 image get_network_image_layer(network net, int i)

@@ -1,5 +1,5 @@
 #include "network.h"
-#include "detection_layer.h"
+//#include "detection_layer.h"
 #include "region_layer.h"
 #include "cost_layer.h"
 #include "utils.h"
@@ -63,21 +63,19 @@ void *detect_in_thread(void *ptr)
     mean_arrays(predictions, demo_frame, l.outputs, avg);
     l.output = last_avg2;
     if(demo_delay == 0) l.output = avg;
-    if(l.type == DETECTION){
-        get_detection_boxes(l, 1, 1, demo_thresh, probs, boxes, 0);
-    } else if (l.type == REGION){
-        get_region_boxes(l, buff[0].w, buff[0].h, net.w, net.h, demo_thresh, probs, boxes, 0, 0, demo_hier, 1);
+    if (l.type == REGION){
+        //get_region_boxes(l, buff[0].w, buff[0].h, net.w, net.h, demo_thresh, probs, boxes, 0, 0, demo_hier, 1);
     } else {
         error("Last layer must produce detections\n");
     }
-    if (nms > 0) do_nms_obj(boxes, probs, l.w*l.h*l.n, l.classes, nms);
+    if (nms > 0) do_nms_obj(boxes, probs, l.w*l.h*l.n, l.classes_act, nms);
 
     printf("\033[2J");
     printf("\033[1;1H");
     printf("\nFPS:%.1f\n",fps);
     printf("Objects:\n\n");
     image display = buff[(buff_index+2) % 3];
-    draw_detections(display, demo_detections, demo_thresh, boxes, probs, demo_names, demo_alphabet, demo_classes);
+    draw_detections_act(display, demo_detections, demo_thresh, boxes, probs, demo_names, demo_alphabet, demo_classes);
 
     demo_index = (demo_index + 1)%demo_frame;
     running = 0;
@@ -185,7 +183,7 @@ void demo(char *cfgfile, char *weightfile, float thresh, int cam_index, const ch
 
     boxes = (box *)calloc(l.w*l.h*l.n*2, sizeof(box));
     probs = (float **)calloc(l.w*l.h*l.n*2, sizeof(float *));
-    for(j = 0; j < l.w*l.h*l.n; ++j) probs[j] = (float *)calloc(l.classes+1, sizeof(float));
+    for(j = 0; j < l.w*l.h*l.n; ++j) probs[j] = (float *)calloc(l.classes_act+1, sizeof(float));
 
     buff[0] = get_image_from_stream(cap);
     buff[1] = copy_image(buff[0]);
