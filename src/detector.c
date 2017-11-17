@@ -421,7 +421,6 @@ void validate_detector_flip(char *datacfg, char *cfgfile, char *weightfile, char
     fprintf(stderr, "Total Detection Time: %f Seconds\n", (double)(time(0) - start));
 }
 
-
 void validate_detector(char *datacfg, char *cfgfile, char *weightfile, char *outfile)
 {
     int j;
@@ -493,8 +492,9 @@ void validate_detector(char *datacfg, char *cfgfile, char *weightfile, char *out
     int i=0;
     int t;
 
-    float thresh = .0001;
-    //float thresh = .01;
+    float thresh = .001;
+    float thresh_obj = .09;
+    //float thresh_obj = .2;
     float nms = .45;
 
     int nthreads = 4;
@@ -538,11 +538,21 @@ void validate_detector(char *datacfg, char *cfgfile, char *weightfile, char *out
             int w = val[t].w;
             int h = val[t].h;
             get_region_boxes_act(l, w, h, net.w, net.h, thresh, probs_act, boxes_act, 0, map, .5, 0);
+            get_region_boxes_obj(l, w, h, net.w, net.h, thresh_obj, probs_obj, boxes_obj, 0, map, .5, 0);
+            if (nms) do_nms_obj(boxes_obj, probs_obj, l.w*l.h*(l.n - l.boundary), l.classes_obj, nms);
             if (nms){
+#if 1
+                merge_act_and_obj(boxes_act, probs_act, l.w*l.h*l.boundary, l.classes_act,
+                                  boxes_obj, probs_obj, l.w*l.h*(l.n - l.boundary), l.classes_obj,
+                                  thresh); 
+#endif 
                 if (relation)
-                    do_nms_act(boxes_act, probs_act, l.w*l.h*l.boundary, classes_act, nms);
+                    do_nms_act(boxes_act, probs_act, l.w*l.h*l.boundary, classes_act, nms); 
                 else
-                    do_nms_sort_act_valid(boxes_act, probs_act, l.w*l.h*l.boundary, classes_act, nms);                    
+                    do_nms_sort_act_valid(boxes_act, probs_act, l.w*l.h*l.boundary, classes_act, nms); 
+                    //do_nms_act(boxes_act, probs_act, l.w*l.h*l.boundary, classes_act, nms);   
+
+               
             } 
             if (coco){
                 print_cocos(fp, path, boxes_act, probs_act, l.w*l.h*l.n, classes_act, w, h);
@@ -758,11 +768,18 @@ void test_detector(char *datacfg, char *cfgfile, char *weightfile, char *filenam
         get_region_boxes_act(l, im.w, im.h, net.w, net.h, thresh, probs_act, boxes_act, 0, 0, hier_thresh, 1);
         get_region_boxes_obj(l, im.w, im.h, net.w, net.h, thresh, probs_obj, boxes_obj, 0, 0, hier_thresh, 1);
         printf("get_region_boxes_act .......\n");
+#if 0
+        merge_act_and_obj(boxes_act, probs_act, l.w*l.h*l.boundary, l.classes_act,
+                          boxes_obj, probs_obj, l.w*l.h*(l.n - l.boundary), l.classes_obj,
+                          thresh);
+
+#endif
         if (nms) do_nms_act(boxes_act, probs_act, l.w*l.h*l.boundary, l.classes_act, nms);
         if (nms) do_nms_obj(boxes_obj, probs_obj, l.w*l.h*(l.n - l.boundary), l.classes_obj, nms);
+
         //else if (nms) do_nms_sort(boxes, probs, l.w*l.h*l.n, l.classes, nms);
         draw_detections_act(im, l.w*l.h*l.boundary, thresh, boxes_act, probs_act, names_act, alphabet, l.classes_act);
-        draw_detections_obj(im, l.w*l.h*(l.n - l.boundary), thresh, boxes_obj, probs_obj, names_obj, alphabet, l.classes_obj);
+        //draw_detections_obj(im, l.w*l.h*(l.n - l.boundary), thresh, boxes_obj, probs_obj, names_obj, alphabet, l.classes_obj);
         if(outfile){
             save_image(im, outfile);
         }

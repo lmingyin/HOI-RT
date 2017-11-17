@@ -269,7 +269,8 @@ void do_nms_act(box *boxes, float **probs, int total, int classes, float thresh)
 			box b2 = boxes[s[j].index * 2 + 1];
 			float iou1 = box_iou(a1, b1);
 			float iou2 = box_iou(a2, b2);
-			float iou = (iou1 + iou2) / 2;
+			//float iou = (iou1 + iou2) / 2;
+            float iou = min_float(iou1, iou2);
             if (iou1 > thresh){
                 for(k = 0; k < classes+1; ++k){
                     probs[s[j].index][k] = 0;
@@ -407,4 +408,66 @@ box decode_box(box b, box anchor)
     decode.w = pow(2., b.w) * anchor.w;
     decode.h = pow(2., b.h) * anchor.h;
     return decode;
+}
+
+float min_float(float a, float b){
+    return a < b ? a : b;
+}
+
+float max_float(float a, float b){
+    return a < b ? b : a;
+}
+
+//float caculate_prob_dis(box obj1, box obj2){
+//    float distance = sqrt((obj1.x - obj2.x) * (obj1.x - obj2.x) + (obj1.y - obj2.y) * (obj1.y - obj2.y));
+//    float prob_dis = min_float(min_float(obj1.w, obj1.h) /(distance * 1.0), 1.0);
+//    return prob_dis;
+//}
+float caculate_prob_dis(box obj1, box obj2){
+    float distance = sqrt((obj1.x - obj2.x) * (obj1.x - obj2.x) + (obj1.y - obj2.y) * (obj1.y - obj2.y));
+    float dis_wh = sqrt((obj1.w - obj2.w) * (obj1.w - obj2.w) + (obj1.h - obj2.h) * (obj1.h - obj2.h));
+    float prob_dis = min_float(min_float(obj1.w, obj1.h) / (distance + dis_wh), 1.0);
+    return prob_dis;
+}
+
+
+void merge_act_and_obj(box *boxes_act, float **probs_act, int num_act, int classes_act,
+                       box *boxes_obj, float **probs_obj, int num_obj, int classes_obj,
+                       float thresh){
+    int i = 0;
+    for (i = 0; i < num_act; i++){
+        int class_act = max_index(probs_act[i], classes_act);
+        float prob_act = probs_act[i][class_act];
+        if (prob_act < thresh)
+            continue;
+        float prob_obj_set = 0, score_dis = 0, score_dis_and_prob = 0;
+        float score_dis_max = 0, score_dis_and_prob_max = 0;
+        int j = 0, flag_max = 0;
+        for (j = 0; j < num_obj; j++){
+            int class_obj = max_index(probs_obj[j], classes_obj);
+            //make sure action and object are relevant
+            if (class_act != (class_obj - 1))
+                continue;
+            //printf("class_obj is: %d\n", class_obj);
+            //printf("class_act is: %d\n", class_act);
+            float prob_obj = probs_obj[j][class_obj];   
+            if (prob_obj < thresh) 
+                continue;   
+            score_dis = caculate_prob_dis(boxes_act[i*2 + 1], boxes_obj[j]);
+            score_dis_and_prob = score_dis * prob_obj;
+            //printf("score_dis is: %f\n", score_dis);
+            if(score_dis_and_prob > score_dis_and_prob_max){
+                score_dis_and_prob_max = score_dis_and_prob;
+                //prob_obj_set = prob_obj;
+                flag_max = j;
+            }   
+        }
+        //printf("prob_obj_set is: %f\n", prob_obj_set);
+        //printf("score_dis_max is: %f\n", score_dis_max);
+        float temp = probs_act[i][class_act];
+        if(temp > 0.0)
+           boxes_act[i*2 + 1] =  boxes_obj[flag_max];
+        probs_act[i][class_act] = temp * score_dis_and_prob_max;
+        //printf("probs_act[i][class_act] is: %f\n", probs_act[i][class_act]);
+    }
 }
