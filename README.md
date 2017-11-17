@@ -4,4 +4,4 @@ This is the repo for the paper named detecting human-object interactions in real
 ## Installation (sufficient for the demo)
 
 #### 1 Clone the Faster R-CNN repository
-```git clone --recursive https://github.com/rbgirshick/py-faster-rcnn.git ```
+```git clone --recursive git@github.com:ZhongxingPeng/HOI-RT.git ```
