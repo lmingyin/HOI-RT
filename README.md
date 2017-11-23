@@ -101,7 +101,7 @@ make clean && make -j8
 ./darknet detector train cfg/vcoco.data cfg/yolo-vcoco608.cfg ../darknet19_448.conv.23 
 ```
 ## Validate
-### Validate on action about AP<sub>agent</sub>
+### Validate action detection on AP<sub>agent</sub>
 1. Generate the test labels  
 Copy *vcoco_test_action.py* from the **script** folder to **v-coco** folder, and then 
    ```
@@ -129,7 +129,7 @@ Copy *vcoco_test_action.py* from the **script** folder to **v-coco** folder, and
    ```
    run the script *validate_action.m*, you will get the AP<sub>agent</sub> for every action.
 
-### Validate on relation about AP<sub>role</sub>
+### Validate relation detection on AP<sub>role</sub>
 1. Generate the test labels  
 Copy *vcoco_test_relation.py* from the **script** folder to **v-coco** folder, and then 
    ```
