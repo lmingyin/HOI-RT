@@ -4,14 +4,18 @@
 This is the repo for the paper named detecting human-object interactions in real-time,
 see more detail on our [tech report](aaaaaa).
 
+## Contents
+1. [Requirements](#requirements)
+2. [Installation](#installation)
+3. [Test](#test)
+4. [Train](#train)
+5. [Validate](#validate)
+
 ## Requirements  
 ### Hardware  
 GPU: Titan, Titan Black, Titan X, K20, K40, K80, GTX
 ### Software  
-You should install matlab to validate the training result of HOI-RT.
-### Preparation  
-You should install cuda, opencv and cudnn. Then set the 1-3 line of *Makefile*: 
-
+You should install matlab to validate the training result of HOI-RT. You should install cuda, opencv and cudnn. Then set the 1-3 line of *Makefile*: 
 ```
 GPU=1
 CUDNN=1
