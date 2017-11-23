@@ -28,7 +28,7 @@ Firstly, make a new folder named **detection** and then
    cd $HOI-RT  && make -j8
    ```  
 1. Load the trained model  
-   load [the trained model]() which has been trained on vcoco and our labeled dataset.
+   Load [the trained model]() which has been trained on vcoco and our labeled dataset.
 And put the model in the **detection** folder.
  
 ## Test  
@@ -73,7 +73,7 @@ Copy vcoco_label.py from **script** folder to **v-coco** folder and then
    cd coco && mkdir filelist
    cd v-coco && python vcoco_label.py
    ```
-   Finally, in folder **filelist** will generate a file *trainVCOCO.txt*.And in folder **coco** will generate a folder named **labels** which contain all training labels.    
+   Finally, in folder **filelist** will generate a file *trainVCOCO.txt*. And in folder **coco** will outputs a folder named **labels** which contain all training labels.    
 1. Make labels from our dataset  
   Copy voc_relation_xml.py from the **script** folder to the **detection** folder, 
 and then
@@ -109,7 +109,7 @@ Copy *vcoco_test_action.py* from the **script** folder to **v-coco** folder, and
    python vcoco_test_action.py
    ```
    You will get a folder **vcoco_action_valid**. Put it in the **detection** folder.
-1. Validate the model on ***action detection***  
+1. Validate the model on action detection 
    ```
    cd HOI-RT/cfg/
    ``` 
@@ -127,7 +127,7 @@ Copy *vcoco_test_action.py* from the **script** folder to **v-coco** folder, and
    ```
    cd HOI-RT/matlab
    ```
-   run the program *validate_action.m*, you will get the AP<sub>agent</sub> for every action.
+   run the script *validate_action.m*, you will get the AP<sub>agent</sub> for every action.
 
 ### Validate on relation about AP<sub>role</sub>
 1. Generate the test labels  
@@ -136,7 +136,7 @@ Copy *vcoco_test_relation.py* from the **script** folder to **v-coco** folder, a
    python vcoco_test_relation.py
    ```
    A folder **vcoco_relation_valid** will be generated, and put it in the folder **detection**.
-1. Validate the model on ***relation detection***  
+1. Validate the model on relation detection 
    ```
    cd HOI-RT/cfg/
    ``` 
@@ -154,6 +154,6 @@ Copy *vcoco_test_relation.py* from the **script** folder to **v-coco** folder, a
    ```
    cd HOI-RT/matlab
    ```
-   run the program *validate_relation.m*, you will get the AP<sub>role</sub> for every action. 
+   run the script *validate_relation.m*, you will get the AP<sub>role</sub> for every action. 
 
  
