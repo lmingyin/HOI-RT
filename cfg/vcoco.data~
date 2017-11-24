@@ -1,8 +1,0 @@
-classes_act = 8
-classes_obj = 9
-train  = /home/mengyong/Downloads/coco/filelist/train2014.txt
-valid  = /home/mengyong/Downloads/coco/filelist/test.txt
-names_act = data/vcoco_act.names
-names_obj = data/vcoco_obj.names
-backup = backup
-eval = 
