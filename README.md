@@ -79,10 +79,10 @@ Copy vcoco_label.py from **script** folder to **v-coco** folder and then
    ```
    Finally, in folder **filelist** will generate a file *trainVCOCO.txt*. And in folder **coco** will outputs a folder named **labels** which contain all training labels.    
 1. Make labels from our dataset  
-  Copy voc_relation_xml.py from the **script** folder to the **detection** folder, 
+  Copy voc_relation_label.py from the **script** folder to the **detection** folder, 
 and then
    ```
-   cd detection && python voc_relation_xml.py
+   cd detection && python voc_relation_label.py
    ```
    Finally, *trainOurs.txt* will be generated in current folder, and training labels will be generated in every action folder in **RelationDataset**. 
 
