@@ -32,7 +32,7 @@ Firstly, make a new folder named **detection** and then
    cd $HOI-RT  && make -j8
    ```  
 1. Load the trained model  
-   Load [the trained model]() which has been trained on vcoco and our labeled dataset.
+   Load [the trained model](https://pan.baidu.com/s/177AO524MIBf-vrg5213GWA) which has been trained on vcoco and our labeled dataset.
 And put the model in the **detection** folder.
  
 ## Test  
@@ -69,7 +69,7 @@ V-COCO dataset builds off MS COCO, please download [MS-COCO](http://cocodataset.
   See more V-COCO introduction in [V-COCO Repository](https://github.com/s-gupta/v-coco).
 
 ### Load our dataset
-  More training data should be loaded from [our dataset]() , then extract the folder **RelationDataset** under the folder **detection**. 
+  More training data should be loaded from [our dataset1](https://pan.baidu.com/s/1lRrHTPsKLsNjZd48Iu3v3w) and [our dataset2](https://pan.baidu.com/s/1qK4EOqR1M3XOlI1ueRY5Hg) , then combine the two folder to **RelationDataset** and put it under the folder **detection**. 
 ### Generate training labels 
 1. Make labels from V-COCO dataset   
 Copy vcoco_label.py from **script** folder to **v-coco** folder and then
