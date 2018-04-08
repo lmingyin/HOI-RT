@@ -92,7 +92,7 @@ Copy *trainOurs.txt* to the folder **filelist**. And then
    cd filelist && cat trainVCOCO.txt trainOurs.txt > train.txt
    ```
 ### Load the pretrained model 
-  Load the [pretrained model](), and put it in the **detection** folder
+  Load the [pretrained model](https://pjreddie.com/media/files/darknet19_448.conv.23), and put it in the **detection** folder
 ### Train the model
 Before training, you should set *cfg/vcoco.data*
 ```
