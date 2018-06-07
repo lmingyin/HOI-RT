@@ -32,7 +32,7 @@ Firstly, make a new folder named **detection** and then
    cd $HOI-RT  && make -j8
    ```  
 1. Load the trained model  
-   Load [the trained model](https://pan.baidu.com/s/177AO524MIBf-vrg5213GWA) which has been trained on vcoco and our labeled dataset.
+   Load [the trained model](https://pan.baidu.com/s/1ZyXGFf2VSXHArigDwMdAoA) which has been trained on vcoco and our labeled dataset.
 And put the model in the **detection** folder.
  
 ## Test  
