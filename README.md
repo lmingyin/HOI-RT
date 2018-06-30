@@ -25,7 +25,7 @@ OPENCV=1
 1. Clone the HOI-RT repository  
 Firstly, make a new folder named **detection** and then
    ```
-   cd detection && git clone --recursive git@github.com:ZhongxingPeng/HOI-RT.git
+   cd detection && git clone --recursive git@github.com:lmingyin/HOI-RT.git
    ```  
 1. Build the project
    ```
