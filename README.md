@@ -2,7 +2,7 @@
 # Detecting Human-Object Interactions in Real-Time
 
 This is the repo for the paper named detecting human-object interactions in real-time,
-see more detail on our [tech report](aaaaaa).
+see more detail on our [tech report](https://github.com/lmingyin/HOI-RT/blob/master/Detecting%20Human-Object%20Interactions%20in%20Real-Time.pdf).
 
 ## Contents
 1. [Requirements](#requirements)
